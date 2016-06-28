@@ -1,0 +1,86 @@
+---
+output: html_document
+---
+
+### Executive Summary  
+This study is intended to explore more about manual and automatic transmissions. At the end of this study we will be able to answer wich transmission, manual or automatic, is better for gas consumption as well as the quantified difference between these two types of transmission.  
+
+To reach this goal we will use the ***mtcars***, extracted from 1974 Motor Trend US magazine, dataset and perform linear regressions and technics to improve the model.  
+
+### Exploratory Data Analises  
+
+To begin the study it is important to check the dataset and its variables:  
+The help page of this dataset has the format:  
+***mtcars*** dataset has the following format:  
+
+[, 1]	 ***mpg***	 Miles/(US) gallon  
+[, 2]	 ***cyl***	 Number of cylinders  
+[, 3]	 ***disp***	 Displacement (cu.in.)  
+[, 4]	 ***hp***	 Gross horsepower  
+[, 5]	 ***drat***	 Rear axle ratio  
+[, 6]	 ***wt***	 Weight (1000 lbs)  
+[, 7]	 ***qsec***	 1/4 mile time  
+[, 8]	 ***vs***	 V/S  
+[, 9]	 ***am***	 Transmission (0 = automatic, 1 = manual)  
+[,10]	 ***gear***	 Number of forward gears  
+[,11]	 ***carb***	 Number of carburetors  
+
+```{r expl_ana, echo = TRUE, warning = FALSE}
+    library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
+    library(ggplot2, quietly = TRUE, warn.conflicts = FALSE)
+    data("mtcars")
+    head(mtcars, n = 5)
+```
+
+We can plot a preliminary graph comparing the MPG in an Automatic transmission vs Manual transmission in order to guide our study:  
+```{r ggplot2_boxplot}
+ggplot(mtcars, aes(x = factor(am, labels = c("Automatic","Manual")), y = mpg)) + geom_boxplot(aes(fill=factor(am, labels = c("Automatic","Manual")))) + ggtitle(label = "Gas Consumption on Automatic vs Manual Transmission") + xlab("Transmission Type") + ylab("Miles per Galon") + labs(fill = "Transmission")
+```
+This graph showed us that the gas consumption on automatic cars, on avarage, tend to be higher than the manual cars.  
+
+We can perform the t-test to reject or not the null hyphothesis:  
+```{r ttest}
+t.test(as.numeric(mtcars$mpg) ~ as.factor(mtcars$am))
+```
+
+The p-value let us to reject the null hypothesis that the mpg for automatic and manual cars are the same.  
+
+In order to see wich variables have more impact on MPG we can study the Pearson correlation table:  
+
+```{r correlation}
+    cor(mtcars)[1,]
+```
+
+The correlation table showed us that the variables ***cyl, disp, hp, drat, wt, vs and am*** are strong correlated with the outcome ***mpg***  
+
+### Data processing and transformation  
+
+As we could see in the preview of the dataset, we can transform some variables in factors:  
+```{r transformation}
+mtcars <- mutate(mtcars, cyl = as.factor(cyl))
+mtcars <- mutate(mtcars, vs = as.factor(vs))
+mtcars <- mutate(mtcars, am = factor(am, labels = c("Automatic","Manual")))
+mtcars <- mutate(mtcars, gear = as.factor(gear))
+mtcars <- mutate(mtcars, carb = as.factor(carb))
+```
+
+### Model Construction
+One approach to the linear model selection variables is the backward elimination, encapsulated in the ***step*** function in R. To use this technique we first fit a linear regression model with the outcome, in this case the ***mpg*** variable, and all other variables as predictors:  
+```{r model}
+fit_initial <- lm(mpg ~ ., data = mtcars)
+fit_step <- step(fit_initial, direction = "both", trace = FALSE)
+summary(fit_step)
+```
+
+If we compare the Adjusted R^2 we can see a good improvement in it with less variables than the first model:
+```{r compare_r2}
+data.frame(initial_model = summary(fit_initial)$adj.r.squared, step_model = summary(fit_step)$adj.r.squared)
+```
+
+### Residuals  
+Let's study the residuals, and others diagnostics, in this model:  
+```{r residuals}
+par(mfrow = c(2,2), mar = c(4,4,2,2))
+plot(fit_step)
+```
+
