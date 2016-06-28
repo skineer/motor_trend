@@ -43,6 +43,7 @@ We can plot a preliminary graph comparing the ***mpg*** in an automatic transmis
 ```{r ggplot2_boxplot}
 ggplot(mtcars, aes(x = factor(am, labels = c("Automatic","Manual")), y = mpg)) + geom_boxplot(aes(fill=factor(am, labels = c("Automatic","Manual")))) + ggtitle(label = "Gas Consumption on Automatic vs Manual Transmission") + xlab("Transmission Type") + ylab("Miles per Galon") + labs(fill = "Transmission")
 ```
+
 This graph showed us that the gas consumption on automatic cars, on avarage, tend to be higher than the manual cars.  
 
 We can perform the t-test to reject, or don't, the null hyphothesis:  
