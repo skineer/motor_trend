@@ -3,15 +3,20 @@ output: html_document
 ---
 
 ### Executive Summary  
-This study is intended to explore more about manual and automatic transmissions. At the end of this study we will be able to answer wich transmission, manual or automatic, is better for gas consumption as well as the quantified difference between these two types of transmission.  
+This study intends to explore more about manual and automatic transmission cars. At the end of this study we will be able to answer wich transmission, manual or automatic, is better for gas consumption as well as the quantified difference in miles per galoon between these two types of transmission.  
 
-To reach this goal we will use the ***mtcars***, extracted from 1974 Motor Trend US magazine, dataset and perform linear regressions and technics to improve the model.  
+To reach this goal we will use the ***mtcars*** dataset, extracted from 1974 Motor Trend US magazine, and perform linear regressions and technics to improve the model.  
+
+The summary of the results is:  
+
+1) Manual transmission cars are more economic in gas consumption than automatic transmission cars  
+2) Manual transmission cars have the mpg ***increased by 1.8*** if compared to automatic transmission cars   
+3) The medians of automatic and manual transmission cars, that could be observed on the boxplot, are considerable different  
 
 ### Exploratory Data Analises  
 
 To begin the study it is important to check the dataset and its variables:  
-The help page of this dataset has the format:  
-***mtcars*** dataset has the following format:  
+The help page of the ***mtcars*** dataset has the format:  
 
 [, 1]	 ***mpg***	 Miles/(US) gallon  
 [, 2]	 ***cyl***	 Number of cylinders  
@@ -26,29 +31,29 @@ The help page of this dataset has the format:
 [,11]	 ***carb***	 Number of carburetors  
 
 ```{r expl_ana, echo = TRUE, warning = FALSE}
-    library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
-    library(ggplot2, quietly = TRUE, warn.conflicts = FALSE)
-    data("mtcars")
-    head(mtcars, n = 5)
+library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
+library(ggplot2, quietly = TRUE, warn.conflicts = FALSE)
+data("mtcars")
+head(mtcars, n = 5)
 ```
 
-We can plot a preliminary graph comparing the MPG in an Automatic transmission vs Manual transmission in order to guide our study:  
+We can plot a preliminary graph comparing the ***mpg*** in an automatic transmission vs manual transmission in order to guide our study:  
 ```{r ggplot2_boxplot}
 ggplot(mtcars, aes(x = factor(am, labels = c("Automatic","Manual")), y = mpg)) + geom_boxplot(aes(fill=factor(am, labels = c("Automatic","Manual")))) + ggtitle(label = "Gas Consumption on Automatic vs Manual Transmission") + xlab("Transmission Type") + ylab("Miles per Galon") + labs(fill = "Transmission")
 ```
 This graph showed us that the gas consumption on automatic cars, on avarage, tend to be higher than the manual cars.  
 
-We can perform the t-test to reject or not the null hyphothesis:  
+We can perform the t-test to reject, or don't, the null hyphothesis:  
 ```{r ttest}
-t.test(as.numeric(mtcars$mpg) ~ as.factor(mtcars$am))
+t.test(as.numeric(mtcars$mpg) ~ as.factor(mtcars$am))$p.value
 ```
 
-The p-value let us to reject the null hypothesis that the mpg for automatic and manual cars are the same.  
+The p-value < 0.05 let us to reject the null hypothesis that the mpg for automatic and manual cars are the same.  
 
-In order to see wich variables have more impact on MPG we can study the Pearson correlation table:  
+In order to discover wich variables have more impact on MPG we can study the Pearson correlation table:  
 
 ```{r correlation}
-    cor(mtcars)[1,]
+cor(mtcars)[1,]
 ```
 
 The correlation table showed us that the variables ***cyl, disp, hp, drat, wt, vs and am*** are strong correlated with the outcome ***mpg***  
@@ -65,7 +70,7 @@ mtcars <- mutate(mtcars, carb = as.factor(carb))
 ```
 
 ### Model Construction
-One approach to the linear model selection variables is the backward elimination, encapsulated in the ***step*** function in R. To use this technique we first fit a linear regression model with the outcome, in this case the ***mpg*** variable, and all other variables as predictors:  
+One approach to the linear model selection variables is the backward elimination, encapsulated in the ***step*** function in R. To use this technique we first fit a linear regression model with the outcome, in this case the ***mpg*** variable, and all other variables as predictors and, after that, we can use the ***step*** function as follows:  
 ```{r model}
 fit_initial <- lm(mpg ~ ., data = mtcars)
 fit_step <- step(fit_initial, direction = "both", trace = FALSE)
@@ -77,6 +82,13 @@ If we compare the Adjusted R^2 we can see a good improvement in it with less var
 data.frame(initial_model = summary(fit_initial)$adj.r.squared, step_model = summary(fit_step)$adj.r.squared)
 ```
 
+We can also check for anova between the model only considering the transmission type as predictor and the model recomended from step function:  
+```{r anova}
+anova(lm(mpg ~ am, data = mtcars), fit_step)
+```
+
+This anova test, considering the p-value, let us to reject the null hypothesis that the variables included after the step function don't help the model to be more precise. 
+
 ### Residuals  
 Let's study the residuals, and others diagnostics, in this model:  
 ```{r residuals}
@@ -84,3 +96,20 @@ par(mfrow = c(2,2), mar = c(4,4,2,2))
 plot(fit_step)
 ```
 
+1) This residual plot show us an unbiased model (no pattern found)  
+2) The Q-Q Plot show us some normality distribution on the residuals  
+3) The scale-location plot is almost the same as the residual plot, no pattern could be observed so the model in unbiased  
+4) The residual vs leverage plot show us some outliers that, if removed, will change the linear regression model  
+
+### Inferences
+
+There are differences between cars equiped with automatic transmission and manual transmission. As we could observe in the t-test and other tests performed in this study.  
+
+### Conclusions  
+The summary of the linear model lead us to the following conclusions:  
+
+1) If all the other variables, ***cyl, hp and wt***, hold the same, manual cars will have an ***increase*** on mpg of ***1.8***  
+2) If all the other variables, ***cyl, hp and am***, hold the same, for each unit increased in ***wt*** the ***mpg*** will ***decrease*** by ***2.5***  
+3) If all the other variables, ***cyl, am and wt***, hold the same, for each unit increased in ***hp*** the ***mpg*** will ***decrease*** by ***0.03***  
+4) If all the other variables, ***am, hp and wt***, hold the same, for cyl change from 4 to 6 it will ***decrease*** the ***mpg*** in ***3.03***  
+5) If all the other variables, ***am, hp and wt***, hold the same, for cyl change from 4 to 8 it will ***decrease*** the ***mpg*** in ***2.16***  
