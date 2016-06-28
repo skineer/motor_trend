@@ -1,6 +1,8 @@
 ---
 output: html_document
 ---
+### Motor trend study (Manual vs Automatic cars)
+#### by Renato Pedroso  
 
 ### Executive Summary  
 This study intends to explore more about manual and automatic transmission cars. At the end of this study we will be able to answer wich transmission, manual or automatic, is better for gas consumption as well as the quantified difference in miles per galoon between these two types of transmission.  
